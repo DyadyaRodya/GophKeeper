@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: goph-keeper-postgres-local
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - postgres.logs:/var/log/postgresql
+    command:
+      - postgres
+      - -c
+      - logging_collector=on
+      - -c
+      - log_directory=/var/log/postgresql
+      - -c
+      - log_filename=postgresql-%Y-%m-%d_%H%M.log
+      - -c
+      - log_rotation_size=10MB
+      - -c
+      - log_truncate_on_rotation=off
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres:
+    driver: local
+  postgres.logs:
+    driver: local
