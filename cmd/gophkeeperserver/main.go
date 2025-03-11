@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/DyadyaRodya/GophKeeper/internal/app"
+	"github.com/DyadyaRodya/GophKeeper/internal/app/server"
 )
 
 var buildVersion = "N/A" //nolint: gochecknoglobals // This var could be global
@@ -21,7 +21,7 @@ func main() {
 		buildCommit,
 	)
 
-	server, err := app.NewApp()
+	serverApp, err := server.NewApp()
 	if err != nil {
 		panic(err)
 	}
@@ -30,12 +30,12 @@ func main() {
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
 		s := <-c
-		err = server.ShutdownServer(s)
+		err = serverApp.Shutdown(s)
 		if err != nil {
 			panic(err)
 		}
 	}()
-	err = server.RunServer()
+	err = serverApp.Run()
 	if err != nil {
 		panic(err)
 	}

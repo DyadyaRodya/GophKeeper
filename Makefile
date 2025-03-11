@@ -6,9 +6,15 @@ install_bin: # install binary dependencies
 	GOBIN=$(LOCAL_BIN) go mod tidy
 	GOBIN=$(LOCAL_BIN) go install github.com/vektra/mockery/v2@latest
 	GOBIN=$(LOCAL_BIN) go install golang.org/x/tools/cmd/goimports@latest
+	GOBIN=$(LOCAL_BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
 .PHONY: install
 install: install_bin
+
+.PHONY: generate
+generate: # generate gRPC files
+	protoc --experimental_allow_proto3_optional --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative proto/v1/gophkeeper.proto
 
 .PHONY: lint
 lint: # run statictest
