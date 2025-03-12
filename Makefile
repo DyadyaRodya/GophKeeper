@@ -19,7 +19,7 @@ generate: # generate gRPC files
 .PHONY: lint
 lint: # run statictest
 	$(LOCAL_BIN)/goimports -local "github.com/DyadyaRodya/GophKeeper" -w cmd internal pkg
-	go vet -vettool=/usr/bin/statictest ./...
+	#go vet -vettool=/usr/bin/statictest ./... # broken for go 1.23
 	go build -o cmd/staticlint/main cmd/staticlint/main.go && go vet -vettool=cmd/staticlint/main ./internal/... ./pkg/... ./cmd/...
 
 .PHONY: tests
@@ -27,9 +27,9 @@ tests: # run unit tests
 	go test -race -coverprofile=coverage.out ./...
 
 .PHONY: build-server
-build: # build example
+build-server: # build example
 	go build -ldflags="-X main.buildVersion=v${VERSION} -X 'main.buildDate=$$(date +'%Y/%m/%d %H:%M:%S')' -X 'main.buildCommit=$$(git rev-parse --short HEAD)'" -o cmd/gophkeeperserver/main cmd/gophkeeperserver/main.go
 
 .PHONY: build-client
-build: # build example
+build-client: # build example
 	go build -ldflags="-X main.buildVersion=v${VERSION} -X 'main.buildDate=$$(date +'%Y/%m/%d %H:%M:%S')' -X 'main.buildCommit=$$(git rev-parse --short HEAD)'" -o cmd/gophkeeperclient/main cmd/gophkeeperclient/main.go

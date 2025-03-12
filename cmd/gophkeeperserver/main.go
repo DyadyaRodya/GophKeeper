@@ -9,6 +9,12 @@ import (
 	"github.com/DyadyaRodya/GophKeeper/internal/app/server"
 )
 
+const (
+	defaultGrpcAddress = `:50051`
+	defaultLogLevel    = "info"
+	defaultStorageDir  = "./gophkeeper"
+)
+
 var buildVersion = "N/A" //nolint: gochecknoglobals // This var could be global
 var buildDate = "N/A"    //nolint: gochecknoglobals // This var could be global
 var buildCommit = "N/A"  //nolint: gochecknoglobals // This var could be global
@@ -21,7 +27,7 @@ func main() {
 		buildCommit,
 	)
 
-	serverApp, err := server.NewApp()
+	serverApp, err := server.NewApp(defaultGrpcAddress, defaultLogLevel, defaultStorageDir)
 	if err != nil {
 		panic(err)
 	}

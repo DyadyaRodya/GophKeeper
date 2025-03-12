@@ -27,8 +27,8 @@ type (
 	}
 )
 
-// NewSaveDataUsecase constructor for ServerSaveDataUsecase
-func NewSaveDataUsecase(
+// ServerSaveDataUsecase constructor for ServerSaveDataUsecase
+func NewServerSaveDataUsecase(
 	repo interfaces.Repository,
 	uuidGenerator interfaces.UUIDGenerator,
 	dataStorage interfaces.ServerStorage,

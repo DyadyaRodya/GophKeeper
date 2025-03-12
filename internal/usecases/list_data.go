@@ -21,8 +21,8 @@ type (
 	}
 )
 
-// NewListDataUsecase constructor for ServerListDataUsecase
-func NewListDataUsecase(
+// NewServerListDataUsecase constructor for ServerListDataUsecase
+func NewServerListDataUsecase(
 	repo interfaces.Repository,
 ) *ServerListDataUsecase {
 	return &ServerListDataUsecase{

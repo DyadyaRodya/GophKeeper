@@ -86,7 +86,7 @@ func (c *ClientGRPC) Recover(
 			KEKSalt:       res.KekSalt,
 			RecoveryKey:   res.RecoveryKey,
 		}, nil
-	case codes.InvalidArgument:
+	case codes.Unauthenticated:
 		return nil, domainmodels.ErrWrongCredentials
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline
@@ -110,7 +110,7 @@ func (c *ClientGRPC) UpdatePassword(ctx context.Context, oldPassword, newPasswor
 			KEKSalt:       res.KekSalt,
 			RecoveryKey:   res.RecoveryKey,
 		}, nil
-	case codes.InvalidArgument:
+	case codes.Unauthenticated:
 		return nil, domainmodels.ErrWrongCredentials
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline

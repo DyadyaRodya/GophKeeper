@@ -4,12 +4,15 @@ import (
 	"log"
 	"os"
 
+	"go.uber.org/zap"
+
 	"github.com/DyadyaRodya/GophKeeper/internal/app/logger"
-	"github.com/DyadyaRodya/GophKeeper/internal/repositories/filestorage/local"
 )
 
 // App client app service
-type App struct{}
+type App struct {
+	appLogger *zap.Logger
+}
 
 // NewApp constructor for client App
 func NewApp() (*App, error) {
@@ -18,9 +21,11 @@ func NewApp() (*App, error) {
 		//log.Printf("Config %+v\n", *appConfig)
 		log.Fatalf("Cannot initialize logger %+v\n", err)
 	}
-	localKeyStorage, err := local.NewKeyStorageLocal()
-
-	return &App{}, nil
+	//localKeyStorage, err := local.NewKeyStorageLocal()
+	//cs := domainservices.NewDataConvertor()
+	return &App{
+		appLogger: appLogger,
+	}, nil
 }
 
 // Run starts client App service

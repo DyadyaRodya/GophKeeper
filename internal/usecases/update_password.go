@@ -80,7 +80,7 @@ func (u *ServerUpdatePasswordUsecase) Handle(
 	}
 
 	if userInfo == nil { // same as errors.Is(err, domainmodels.ErrUserNotFound)
-		return nil, nil, domainmodels.ErrUserNotFound
+		return nil, nil, domainmodels.ErrWrongCredentials
 	}
 
 	valid, err := u.passwordService.Compare(oldPassword, userInfo.PasswordHash, userInfo.PasswordSalt)
@@ -89,7 +89,7 @@ func (u *ServerUpdatePasswordUsecase) Handle(
 	}
 
 	if !valid {
-		return nil, nil, domainmodels.ErrUserNotFound
+		return nil, nil, domainmodels.ErrWrongCredentials
 	}
 
 	if !u.passwordService.Validate(newPassword) {

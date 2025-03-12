@@ -11,23 +11,7 @@ import (
 	"github.com/DyadyaRodya/GophKeeper/pkg/files"
 )
 
-const (
-	workDir           = ".gophkeeper"
-	sessionKeyStorage = "sessionkey"
-)
-
-type KeyStorageLocal struct {
-	dir string
-}
-
-func NewKeyStorageLocal() (*KeyStorageLocal, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("NewKeyStorageLocal: could not get home directory: %w", err)
-	}
-	dir := filepath.Join(homeDir, workDir)
-	return &KeyStorageLocal{dir: dir}, nil
-}
+const sessionKeyStorage = "sessionkey"
 
 func (s *KeyStorageLocal) SaveKeys(ctx context.Context, keysInfo *domainmodels.ShortKeyInfo) error {
 	if !files.DirectoryExists(s.dir) {

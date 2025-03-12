@@ -41,7 +41,11 @@ func NewServerLoginUsecase(
 }
 
 // Handle checks username and password, reads user, encrypted dek and kek salt
-func (u *ServerLoginUsecase) Handle(ctx context.Context, username string, password string) (*domainmodels.User, *domainmodels.ShortKeyInfo, error) {
+func (u *ServerLoginUsecase) Handle(
+	ctx context.Context,
+	username string,
+	password string,
+) (*domainmodels.User, *domainmodels.ShortKeyInfo, error) {
 	dbSess, err := u.repo.NewSession(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ServerLoginUsecase.repo.NewSession: %w", err)
@@ -115,7 +119,7 @@ func (u *ClientLoginUsecase) HandleOnline(ctx context.Context, username string, 
 func (u *ClientLoginUsecase) HandleOffline(ctx context.Context, password string) (*dto.ClientLoginResult, error) {
 	localKeysInfo, err := u.localKeyStorage.ReadKeys(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("ClientLoginUsecase.localKeyStorage.SaveKeys: %w", err)
+		return nil, fmt.Errorf("ClientLoginUsecase.localKeyStorage.ReadKeys: %w", err)
 	}
 
 	kek := u.encryptionService.GenerateKEK(password, localKeysInfo.KEKSalt)

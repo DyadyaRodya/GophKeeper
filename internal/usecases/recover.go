@@ -79,7 +79,17 @@ func (u *ServerRecoverUsecase) Handle(
 	}
 
 	if userInfo == nil { // same as errors.Is(err, domainmodels.ErrUserNotFound)
-		return nil, nil, domainmodels.ErrUserNotFound
+		return nil, nil, domainmodels.ErrWrongCredentials
+	}
+
+	keysInfo, err := dbSess.GetKeysInfo(ctx, userInfo.UUID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ServerRecoverUsecase.dbSess.GetKeysInfo: %w", err)
+	}
+
+	dek, err := u.encryptionService.Decrypt(keysInfo.RecoveryDEKCiphertext, recoveryKey)
+	if err != nil {
+		return nil, nil, domainmodels.ErrWrongCredentials
 	}
 
 	if !u.passwordService.Validate(newPassword) {
@@ -94,16 +104,6 @@ func (u *ServerRecoverUsecase) Handle(
 	passwordHash, err := u.passwordService.Hash(newPassword, passwordSalt)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ServerRecoverUsecase.passwordService.Hash: %w", err)
-	}
-
-	keysInfo, err := dbSess.GetKeysInfo(ctx, userInfo.UUID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("ServerRecoverUsecase.dbSess.GetKeysInfo: %w", err)
-	}
-
-	dek, err := u.encryptionService.Decrypt(keysInfo.RecoveryDEKCiphertext, recoveryKey)
-	if err != nil {
-		return nil, nil, fmt.Errorf("ServerRecoverUsecase.encryptionService.GenerateDEK: %w", err)
 	}
 
 	newKEKSalt, err := u.encryptionService.GenerateSalt(u.saltSize)

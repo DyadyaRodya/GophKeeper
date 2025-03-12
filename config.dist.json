@@ -1,0 +1,7 @@
+{
+  "grpc_address": ":50051",
+  "storage_dir": "/path/to/dir/",
+  "log_level": "error",
+  "database_dsn": "",
+  "enable_https": true
+}

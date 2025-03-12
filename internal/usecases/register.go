@@ -67,7 +67,11 @@ func NewServerRegisterUsecase(
 }
 
 // Handle validates username and password, creates user, generates dek, kek, recovery key
-func (u *ServerRegisterUsecase) Handle(ctx context.Context, username string, password string) (*domainmodels.User, *dto.Keys, error) {
+func (u *ServerRegisterUsecase) Handle(
+	ctx context.Context,
+	username string,
+	password string,
+) (*domainmodels.User, *dto.Keys, error) {
 	dbSess, err := u.repo.NewSession(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ServerRegisterUsecase.repo.NewSession: %w", err)

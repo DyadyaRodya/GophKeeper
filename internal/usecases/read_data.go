@@ -29,8 +29,8 @@ type (
 	}
 )
 
-// NewReadDataUsecase constructor for ServerReadDataUsecase
-func NewReadDataUsecase(
+// NewServerReadDataUsecase constructor for ServerReadDataUsecase
+func NewServerReadDataUsecase(
 	repo interfaces.Repository,
 	dataStorage interfaces.ServerStorage,
 ) *ServerReadDataUsecase {
