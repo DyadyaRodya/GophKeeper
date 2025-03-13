@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package gophkeeper.v1;
+
+option go_package = "github.com/DyadyaRodya/GophKeeper/proto/v1";
+
+message RegisterRequest{
+  string username = 1;
+  string password = 2;
+}
+
+message RegisterResponse{
+  string new_jwt_token = 1;
+  bytes dek_ciphertext = 2;
+  bytes kek_salt = 3;
+  bytes recovery_key = 4;
+  string user_uuid = 5;
+}
+
+message LoginRequest{
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse{
+  string new_jwt_token = 1;
+  bytes dek_ciphertext = 2;
+  bytes kek_salt = 3;
+  string user_uuid = 4;
+}
+
+message RecoveryRequest{
+  bytes recovery_key = 1;
+  string new_password = 2;
+  string username = 3;
+}
+
+message RecoveryResponse{
+  string new_jwt_token = 1;
+  bytes dek_ciphertext = 2;
+  bytes kek_salt = 3;
+  bytes recovery_key = 4;
+  string user_uuid = 5;
+}
+
+message UpdatePasswordRequest{
+  string old_password = 1;
+  string new_password = 2;
+  string jwt_token = 3;
+}
+
+message UpdatePasswordResponse{
+  string new_jwt_token = 1;
+  bytes dek_ciphertext = 2;
+  bytes kek_salt = 3;
+  bytes recovery_key = 4;
+  string user_uuid = 5;
+}
+
+message DataMetaInfo{
+  string uuid = 1;
+  string owner_uuid = 2;
+  string last_updated = 3;
+  bool is_deleted = 4;
+}
+
+message SaveDataRequest{
+  string jwt_token = 1;
+  bytes encrypted_data = 2;
+  optional DataMetaInfo meta = 3;
+}
+
+message SaveDataResponse{
+  string new_jwt_token = 1;
+  DataMetaInfo meta = 2;
+}
+
+message ReadDataRequest{
+  string jwt_token = 1;
+  string data_uuid = 2;
+}
+
+message ReadDataResponse{
+  string new_jwt_token = 1;
+  DataMetaInfo meta = 2;
+  bytes encrypted_data = 3;
+}
+
+message ListDataRequest{
+  string jwt_token = 1;
+}
+
+message ListDataResponse{
+  string new_jwt_token = 1;
+  repeated DataMetaInfo metas = 2;
+}
+
+service GophKeeperService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Recovery(RecoveryRequest) returns (RecoveryResponse);
+  rpc UpdatePassword(UpdatePasswordRequest) returns (UpdatePasswordResponse);
+  rpc SaveData(SaveDataRequest) returns (SaveDataResponse);
+  rpc ReadData(ReadDataRequest) returns (ReadDataResponse);
+  rpc ListData(ListDataRequest) returns (ListDataResponse);
+}
