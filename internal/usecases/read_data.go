@@ -11,6 +11,7 @@ import (
 
 type (
 	ClientReadDataGateway interface {
+		interfaces.SaveDataGateway
 		interfaces.ReadDataGateway
 		interfaces.ListDataGateway
 	}
@@ -104,7 +105,7 @@ func (u *ClientReadDataUsecase) Handle(
 
 	var decryptedBytes []byte
 	if remoteMeta != localMeta {
-		decryptedBytes, err = u.syncWithRemoteAndDecrypt(ctx, dek, remoteMeta)
+		decryptedBytes, err = u.syncWithRemoteAndDecrypt(ctx, dek, remoteMeta, localMeta, encryptedData)
 		if err != nil {
 			return nil, nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt: %w", err)
 		}
@@ -125,20 +126,35 @@ func (u *ClientReadDataUsecase) Handle(
 func (u *ClientReadDataUsecase) syncWithRemoteAndDecrypt(
 	ctx context.Context,
 	dek []byte,
-	meta *domainmodels.DataInfo,
+	remote *domainmodels.DataInfo,
+	local *domainmodels.DataInfo,
+	localEncryptedData []byte,
 ) ([]byte, error) {
-	newEncryptedData, err := u.gateway.ReadData(ctx, meta)
-	if err != nil {
-		return nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt.gateway.ReadData: %w", err)
-	}
-	decryptedBytes, err := u.encryptionService.Decrypt(newEncryptedData, dek) // decrypt before saving to check DEK ok
-	if err != nil {
-		return nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt.encryptionService.Decrypt: %w", err)
-	}
+	if remote.LastUpdated.After(local.LastUpdated) {
+		newEncryptedData, err := u.gateway.ReadData(ctx, remote)
+		if err != nil {
+			return nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt.gateway.ReadData: %w", err)
+		}
+		decryptedBytes, err := u.encryptionService.Decrypt(newEncryptedData, dek) // decrypt before saving to check DEK ok
+		if err != nil {
+			return nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt.encryptionService.Decrypt: %w", err)
+		}
 
-	err = u.dataStorage.SaveData(ctx, meta, newEncryptedData)
+		err = u.dataStorage.SaveData(ctx, remote, newEncryptedData)
+		if err != nil {
+			return nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt.dataStorage.SaveData: %w", err)
+		}
+		return decryptedBytes, nil
+	} else if local.IsDeleted {
+		return nil, domainmodels.ErrDataDeleted
+	}
+	_, err := u.gateway.SaveData(ctx, local, localEncryptedData)
 	if err != nil {
-		return nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt.dataStorage.SaveData: %w", err)
+		return nil, fmt.Errorf("ClientReadDataUsecase.syncWithRemoteAndDecrypt.gateway.SaveData: %w", err)
+	}
+	decryptedBytes, err := u.encryptionService.Decrypt(localEncryptedData, dek)
+	if err != nil {
+		return nil, fmt.Errorf("ClientReadDataUsecase.encryptionService.Decrypt: %w", err)
 	}
 	return decryptedBytes, nil
 }

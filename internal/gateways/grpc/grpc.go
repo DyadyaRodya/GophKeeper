@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,19 +16,21 @@ import (
 )
 
 type ClientGRPC struct {
-	client pb.GophKeeperServiceClient
-	jwt    string
+	cc  pb.GophKeeperServiceClient
+	jwt string
 }
 
-func NewClientGRPC(client pb.GophKeeperServiceClient) *ClientGRPC {
+func NewClientGRPC(cc pb.GophKeeperServiceClient) *ClientGRPC {
 	return &ClientGRPC{
-		client: client,
-		jwt:    "",
+		cc:  cc,
+		jwt: "",
 	}
 }
 
 func (c *ClientGRPC) Register(ctx context.Context, username, password string) (*dto.Keys, error) {
-	res, err := c.client.Register(ctx, &pb.RegisterRequest{Username: username, Password: password})
+	res, err := c.cc.Register(ctx, &pb.RegisterRequest{Username: username, Password: password})
+	s, _ := status.FromError(err)
+	fmt.Println(s)
 	code := status.Code(err)
 	switch code {
 	case codes.OK:
@@ -43,11 +46,11 @@ func (c *ClientGRPC) Register(ctx context.Context, username, password string) (*
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline
 	}
-	return nil, err
+	return nil, errors.Join(err, domainmodels.ErrGateway)
 }
 
 func (c *ClientGRPC) Login(ctx context.Context, username, password string) (*domainmodels.ShortKeyInfo, error) {
-	res, err := c.client.Login(ctx, &pb.LoginRequest{Username: username, Password: password})
+	res, err := c.cc.Login(ctx, &pb.LoginRequest{Username: username, Password: password})
 	code := status.Code(err)
 	switch code {
 	case codes.OK:
@@ -62,7 +65,7 @@ func (c *ClientGRPC) Login(ctx context.Context, username, password string) (*dom
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline
 	}
-	return nil, err
+	return nil, errors.Join(err, domainmodels.ErrGateway)
 }
 
 func (c *ClientGRPC) Recover(
@@ -71,7 +74,7 @@ func (c *ClientGRPC) Recover(
 	recoveryKey []byte,
 	newPassword string,
 ) (*dto.Keys, error) {
-	res, err := c.client.Recovery(ctx, &pb.RecoveryRequest{
+	res, err := c.cc.Recovery(ctx, &pb.RecoveryRequest{
 		Username:    username,
 		RecoveryKey: recoveryKey,
 		NewPassword: newPassword,
@@ -91,11 +94,11 @@ func (c *ClientGRPC) Recover(
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline
 	}
-	return nil, err
+	return nil, errors.Join(err, domainmodels.ErrGateway)
 }
 
 func (c *ClientGRPC) UpdatePassword(ctx context.Context, oldPassword, newPassword string) (*dto.Keys, error) {
-	res, err := c.client.UpdatePassword(ctx, &pb.UpdatePasswordRequest{
+	res, err := c.cc.UpdatePassword(ctx, &pb.UpdatePasswordRequest{
 		JwtToken:    c.jwt,
 		OldPassword: oldPassword,
 		NewPassword: newPassword,
@@ -115,7 +118,7 @@ func (c *ClientGRPC) UpdatePassword(ctx context.Context, oldPassword, newPasswor
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline
 	}
-	return nil, err
+	return nil, errors.Join(err, domainmodels.ErrGateway)
 }
 
 func (c *ClientGRPC) SaveData(
@@ -123,14 +126,18 @@ func (c *ClientGRPC) SaveData(
 	meta *domainmodels.DataInfo,
 	encryptedData []byte,
 ) (*domainmodels.DataInfo, error) {
-	res, err := c.client.SaveData(ctx, &pb.SaveDataRequest{
-		JwtToken: c.jwt,
-		Meta: &pb.DataMetaInfo{
+	var m *pb.DataMetaInfo
+	if meta != nil {
+		m = &pb.DataMetaInfo{
 			Uuid:        meta.UUID,
 			OwnerUuid:   meta.OwnerUUID,
 			LastUpdated: meta.LastUpdated.String(),
 			IsDeleted:   meta.IsDeleted,
-		},
+		}
+	}
+	res, err := c.cc.SaveData(ctx, &pb.SaveDataRequest{
+		JwtToken:      c.jwt,
+		Meta:          m,
 		EncryptedData: encryptedData,
 	})
 	code := status.Code(err)
@@ -158,11 +165,11 @@ func (c *ClientGRPC) SaveData(
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline
 	}
-	return nil, err
+	return nil, errors.Join(err, domainmodels.ErrGateway)
 }
 
 func (c *ClientGRPC) ReadData(ctx context.Context, meta *domainmodels.DataInfo) ([]byte, error) {
-	res, err := c.client.ReadData(ctx, &pb.ReadDataRequest{
+	res, err := c.cc.ReadData(ctx, &pb.ReadDataRequest{
 		JwtToken: c.jwt,
 		DataUuid: meta.UUID,
 	})
@@ -181,11 +188,11 @@ func (c *ClientGRPC) ReadData(ctx context.Context, meta *domainmodels.DataInfo) 
 	case codes.NotFound:
 		return nil, domainmodels.ErrDataInfoNotFound
 	}
-	return nil, err
+	return nil, errors.Join(err, domainmodels.ErrGateway)
 }
 
 func (c *ClientGRPC) ListData(ctx context.Context) ([]*domainmodels.DataInfo, error) {
-	res, err := c.client.ListData(ctx, &pb.ListDataRequest{JwtToken: c.jwt})
+	res, err := c.cc.ListData(ctx, &pb.ListDataRequest{JwtToken: c.jwt})
 	code := status.Code(err)
 	switch code {
 	case codes.OK:
@@ -209,5 +216,5 @@ func (c *ClientGRPC) ListData(ctx context.Context) ([]*domainmodels.DataInfo, er
 	case codes.Unavailable:
 		return nil, domainmodels.ErrOffline
 	}
-	return nil, err
+	return nil, errors.Join(err, domainmodels.ErrGateway)
 }

@@ -72,6 +72,9 @@ func (u *ServerSaveDataUsecase) Handle(
 		if err != nil && !errors.Is(err, domainmodels.ErrDataInfoNotFound) {
 			return nil, fmt.Errorf("ServerSaveDataUsecase.repo.ReadDataInfo: %w", err)
 		}
+		if meta.LastUpdated.After(time.Now()) {
+			meta.LastUpdated = time.Now().UTC()
+		}
 		if existingMeta != nil && existingMeta.IsDeleted && meta.LastUpdated.Before(existingMeta.LastUpdated) {
 			return existingMeta, domainmodels.ErrDataDeleted
 		}
@@ -84,11 +87,17 @@ func (u *ServerSaveDataUsecase) Handle(
 		return nil, fmt.Errorf("ServerSaveDataUsecase.dbSess.SaveDataInfo: %w", err)
 	}
 
-	err = u.dataStorage.SaveData(ctx, meta, encryptedData)
-	if err != nil {
-		return nil, fmt.Errorf("ServerSaveDataUsecase.dataStorage.SaveData: %w", err)
+	if meta.IsDeleted {
+		err = u.dataStorage.DeleteData(ctx, meta)
+		if err != nil {
+			return nil, fmt.Errorf("ServerSaveDataUsecase.dataStorage.DeleteData: %w", err)
+		}
+	} else {
+		err = u.dataStorage.SaveData(ctx, meta, encryptedData)
+		if err != nil {
+			return nil, fmt.Errorf("ServerSaveDataUsecase.dataStorage.SaveData: %w", err)
+		}
 	}
-
 	err = dbSess.Commit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("ServerSaveDataUsecase.dbSess.Commit: %w", err)
@@ -98,11 +107,11 @@ func (u *ServerSaveDataUsecase) Handle(
 
 // NewClientSaveDataUsecase constructor for ClientSaveDataUsecase
 func NewClientSaveDataUsecase(
-	gateway interfaces.SaveDataGateway,
 	convertService interfaces.RawDataToBytesConverter,
 	encryptionService interfaces.Encryptor,
 	uuidGenerator interfaces.UUIDGenerator,
 	dataStorage interfaces.ClientStorage,
+	gateway interfaces.SaveDataGateway,
 ) *ClientSaveDataUsecase {
 	return &ClientSaveDataUsecase{
 		gateway:           gateway,
@@ -183,26 +192,12 @@ func (u *ClientSaveDataUsecase) HandleUpdate(
 		LastUpdated: time.Now().UTC(),
 		IsDeleted:   false,
 	}
-	meta, err = u.gateway.SaveData(ctx, meta, encryptedData)
+	_, err = u.gateway.SaveData(ctx, meta, encryptedData)
 	offline := err != nil && errors.Is(err, domainmodels.ErrOffline)
 	if err != nil && !offline {
 		return nil, fmt.Errorf("ClientSaveDataUsecase.HandleUpdate.gateway.SaveData: %w", err)
 	}
 
-	if meta == nil { // same as errors.Is(err, domainmodels.ErrOffline)
-		var uuid string
-		uuid, err = u.uuidGenerator.Generate()
-		if err != nil {
-			return nil, fmt.Errorf("ClientSaveDataUsecase.HandleUpdate.uuidGenerator.Generate: %w", err)
-		}
-
-		meta = &domainmodels.DataInfo{
-			UUID:        uuid,
-			OwnerUUID:   userUUID,
-			LastUpdated: time.Now().UTC(),
-			IsDeleted:   false,
-		}
-	}
 	err = u.dataStorage.SaveData(ctx, meta, encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("ClientSaveDataUsecase.HandleUpdate.dataStorage.SaveData: %w", err)

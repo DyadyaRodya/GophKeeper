@@ -94,7 +94,11 @@ func NewClientLoginUsecase(
 // HandleOnline makes call to server,
 // stores encrypted dek and kek salt locally for offline work.
 // If succeeded returns user uuid, current dek for current session and user UUID.
-func (u *ClientLoginUsecase) HandleOnline(ctx context.Context, username string, password string) (*dto.ClientLoginResult, error) {
+func (u *ClientLoginUsecase) HandleOnline(
+	ctx context.Context,
+	username string,
+	password string,
+) (*dto.ClientLoginResult, error) {
 	keysInfo, err := u.gateway.Login(ctx, username, password)
 	if err != nil {
 		return nil, fmt.Errorf("ClientLoginUsecase.gateway.Login: %w", err)

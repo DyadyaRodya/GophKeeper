@@ -144,7 +144,7 @@ func (u *ServerUpdatePasswordUsecase) Handle(
 
 	err = dbSess.UpdateUser(ctx, userInfo)
 	if err != nil {
-		return nil, nil, fmt.Errorf("ServerUpdatePasswordUsecase.dbSess.AddUser: %w", err)
+		return nil, nil, fmt.Errorf("ServerUpdatePasswordUsecase.dbSess.UpdateUser: %w", err)
 	}
 
 	newKeysInfo := &domainmodels.KeysInfo{

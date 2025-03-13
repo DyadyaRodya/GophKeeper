@@ -70,7 +70,7 @@ func (s *SessionPGX) ReadDataInfo(
 	var updatedAt time.Time
 	var isDeleted bool
 	err := s.tx.QueryRow(ctx, `SELECT updated_at, is_deleted FROM public.data 
-                                   WHERE uuid = @ uuid AND user_uuid = @user_uuid`,
+                                   WHERE uuid = @uuid AND user_uuid = @user_uuid`,
 		pgx.NamedArgs{"user_uuid": userUUID, "uuid": dataUUID},
 	).Scan(&updatedAt, &isDeleted)
 	if errors.Is(err, pgx.ErrNoRows) {

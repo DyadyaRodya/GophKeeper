@@ -71,13 +71,12 @@ func (u *ClientListDataUsecase) Handle(
 		return nil, fmt.Errorf("ClientListDataUsecase.Handle.dataStorage.ListData: %w", err)
 	}
 
-	return u.mergeWithRemote(ctx, metas, userUUID)
+	return u.mergeWithRemote(ctx, metas)
 }
 
 func (u *ClientListDataUsecase) mergeWithRemote(
 	ctx context.Context,
 	local []*domainmodels.DataInfo,
-	userUUID string,
 ) ([]*domainmodels.DataInfo, error) {
 	remote, err := u.gateway.ListData(ctx)
 	if errors.Is(err, domainmodels.ErrOffline) {

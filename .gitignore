@@ -44,3 +44,6 @@ go.work.sum
 
 # SAST plugin
 .ai
+
+# storage
+.storage

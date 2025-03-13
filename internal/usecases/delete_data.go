@@ -20,8 +20,8 @@ type (
 
 // NewClientDeleteDataUsecase constructor for ClientDeleteDataUsecase
 func NewClientDeleteDataUsecase(
-	gateway interfaces.SaveDataGateway,
 	dataStorage interfaces.ClientStorage,
+	gateway interfaces.SaveDataGateway,
 ) *ClientDeleteDataUsecase {
 	return &ClientDeleteDataUsecase{
 		gateway:     gateway,
@@ -41,7 +41,7 @@ func (u *ClientDeleteDataUsecase) Handle(
 		LastUpdated: time.Now().UTC(),
 		IsDeleted:   true,
 	}
-	meta, err := u.gateway.SaveData(ctx, meta, nil) // try notify server to delete
+	_, err := u.gateway.SaveData(ctx, meta, nil) // try notify server to delete
 	offline := err != nil && errors.Is(err, domainmodels.ErrOffline)
 	if err != nil &&
 		!offline &&

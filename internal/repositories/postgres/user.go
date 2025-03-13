@@ -16,7 +16,7 @@ func (s *StorePGX) InitUsers(ctx context.Context, tx pgx.Tx) error {
 	s.logger.Info("Initializing `users` table")
 	_, err := tx.Exec(ctx, `CREATE TABLE IF NOT EXISTS public.users (
         uuid UUID NOT NULL PRIMARY KEY, 
-        username VARCHAR(255) NOT NULL,
+        username VARCHAR(255) UNIQUE NOT NULL,
         created_at TIMESTAMPTZ NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NULL DEFAULT NOW(),
 		password_hash VARCHAR(255),
@@ -61,6 +61,7 @@ func (s *SessionPGX) AddUser(ctx context.Context, user *domainmodels.User) error
 	}
 	return nil
 }
+
 func (s *SessionPGX) UpdateUser(ctx context.Context, user *domainmodels.User) error {
 	s.logger.Debug("Updating User", zap.Any("user", user))
 
@@ -90,7 +91,7 @@ func (s *SessionPGX) UpdateUser(ctx context.Context, user *domainmodels.User) er
 			zap.Error(err))
 		return errors.Join(ErrDBAPI, fmt.Errorf("SessionPGX.UpdateUser: %w", err))
 	}
-	if !ct.Insert() {
+	if !ct.Update() {
 		s.logger.Error("Failed to update table users",
 			zap.Any("user", user),
 			zap.Any("commandTag", ct))
